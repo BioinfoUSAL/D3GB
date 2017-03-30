@@ -4,6 +4,9 @@
 \author{
 David Barrios and Carlos Prieto. Bioinformatics, University of Salamanca. See \url{http://d3gb.usal.es/}
 }
+\value{
+The function add track in a gff file to \code{genomebrowser}.
+}
 \usage{
 genome_addGFF(gb, gfffile)
 }

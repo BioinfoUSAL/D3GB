@@ -4,6 +4,9 @@
 \author{
 David Barrios and Carlos Prieto. Bioinformatics, University of Salamanca. See \url{http://d3gb.usal.es/}
 }
+\value{
+The function add an input track to \code{genomebrowser}.
+}
 \usage{
 genome_addTrack(gb, track, trackname = NULL, type = "gene", color = "#000", scale = NA)
 }
