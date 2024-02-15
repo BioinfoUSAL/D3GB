@@ -23,6 +23,7 @@ genome_addGFF(gb, gfffile)
   \code{\link{genomebrowser}}, \code{\link{genome_addSequence}}, \code{\link{genome_addTrack}}, \code{\link{genome_addVCF}}.
 }
 \examples{
+\dontrun{
 # Download fasta file
 fasta <- tempfile()
 download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
@@ -41,4 +42,5 @@ download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 "GCF_000297395.2_ASM29739v2/GCF_000297395.2_ASM29739v2_genomic.gff.gz"),gff)
 
 genome_addGFF(gb,gff)
+}
 }

@@ -40,7 +40,7 @@ for(i in 1:nrow(GRCh38)){
 value <- round(rexp(length(pos)),2)
 
 track <- data.frame(chr,pos,pos+1,NA,value)
-segments <- segmentation(track, 100000)
+segments <- segmentation(track, 50000)
 
 
 }

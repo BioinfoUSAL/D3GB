@@ -24,6 +24,7 @@ genome_addSequence(gb, fastafile)
   \code{\link{genomebrowser}}, \code{\link{genome_addGFF}}, \code{\link{genome_addTrack}}, \code{\link{genome_addVCF}}.
 }
 \examples{
+\dontrun{
 # Download fasta file
 fasta <- tempfile()
 download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
@@ -35,4 +36,5 @@ download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 gb <- genomebrowser(getAssemblyFromFasta(fasta), dir = "Micromonospora_sequence")
 
 genome_addSequence(gb,fasta)
+}
 }

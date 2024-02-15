@@ -19,6 +19,7 @@ gbk2genomebrowser(gbkfile, server = FALSE, dir = "GenomeBrowser")
 \code{gbk2genomebrowser} creates an interactive genome browser from a GenBank file.
 }
 \examples{
+\dontrun{
 # Download GenBank file
 gbff <- tempfile()
 download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
@@ -28,4 +29,5 @@ download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 # It creates a genome browser ready to be viewed in Firefox.
 # For a server version, ready to be shared with Apache as a Website, set the parameter server=True
 gb <- gbk2genomebrowser(gbff, dir = "Micromonospora_gbk")
+}
 }
