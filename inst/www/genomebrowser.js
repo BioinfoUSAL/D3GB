@@ -6,7 +6,8 @@ var body,
     start,
     end;
 
-var fixedBounds = false;
+var fixedBounds = false,
+    scoreGroups = false;
 
 var margin = 0, width = 0, height = 0;
 
@@ -216,7 +217,7 @@ function displaySelector(gChr, chrScale, selector){
 
     gBrush.select(".background")
       .attr("height", 10)
-      .style("cursor","pointer")
+      .style({"cursor":"pointer","fill":"none"})
       .on("mousedown", !selector ? function(){
         var id = gChr.attr("id");
         d3.selectAll(".brush .extent, .brush .resize").style("display",function(){ return id==this.parentNode.parentNode.id?null:"none"; });
@@ -224,8 +225,10 @@ function displaySelector(gChr, chrScale, selector){
 
     gBrush.selectAll(".resize")
       .style("cursor","move")
-      .append("rect")
+      .select("rect")
         .attr("class", "handle")
+        .attr("x", 0)
+        .attr("y", 0)
         .attr("height", 10)
         .attr("width", 2)
         .style("fill","blue")
@@ -455,6 +458,7 @@ function genomebrowser(){
     });
   });
 
+  if(dataTracks){
   if(dataTracks.map(function(d){ return d[2]; }).indexOf("value")!=-1){
     nav.append("button")
       .attr("class","bounds")
@@ -466,6 +470,20 @@ function genomebrowser(){
         d3.select(this).style("background",fixedBounds?"#aaa":null)
         displayTracks();
       });
+  }
+  
+  if(dataTracks.map(function(d){ return d[2]; }).indexOf("score")!=-1){
+    nav.append("button")
+      .attr("class","group")
+      .text("GROUP")
+      .attr("title","group score tracks by name attribute")
+      .style("float","right")
+      .on("click", function(){
+        scoreGroups = !scoreGroups;
+        d3.select(this).style("background",scoreGroups?"#aaa":null)
+        displayTracks();
+      });
+  }
   }
 
   nav.append("button")
@@ -501,10 +519,11 @@ var svg = body.select("body>div").append("svg")
     .attr("height", height + margin.top + margin.bottom);
 
   svg.append("style")
-    .text("text { font: 10px sans-serif; } "+
+    .text("text { font-size: 10px; font-family:sans-serif; } "+
 ".axis text, text.trackName, text.noData, text.legend { fill: #333; }"+
 "text.trackName { cursor: pointer; }"+
-".segment text { font: 8px monospace; } "+
+"text.scoreGroup { font-size: 12px; font-family: monospace; font-weight: bold; }"+
+".segment text { font-size: 8px; font-family: monospace; } "+
 ".track.vcf .segment text { fill: #fff; }"+
 ".axis path, .axis line { fill: none; stroke: #333; shape-rendering: crispEdges; } "+
 ".buttons {fill: grey;}" +
@@ -976,6 +995,9 @@ var xAxis = d3.svg.axis()
         case "score":
 
           scoreScale.domain(track.property("scale")).nice();
+		  
+          if(scoreGroups)
+            var scoreGroup = d3.map(data, function(d){return d[5];}).keys();
 
           var scores = track.selectAll("path")
               .data(data, function(d){ return d[0]; })
@@ -983,9 +1005,25 @@ var xAxis = d3.svg.axis()
             .style("fill-opacity",function(d){ return scoreScale(d[6]); })
             .call(addTitle);
           scores.exit().remove();
-          scores.attr("d",function(d){ 
-                return "M"+x(d[3])+",0L"+x(d[4])+",0L"+x(d[4])+",10L"+x(d[3])+",10Z";
+          scores.attr("d",function(d){
+                var Height = 0;
+                if(scoreGroups)
+                  Height = (scoreGroup.indexOf(d[5])*12);
+                return "M"+x(d[3])+","+Height+"L"+x(d[4])+","+Height+"L"+x(d[4])+","+(Height+10)+"L"+x(d[3])+","+(Height+10)+"Z";
               })
+
+          if(scoreGroups){
+            var texts = track.selectAll("text.scoreGroup")
+                .data(scoreGroup, function(d){ return d; })
+			texts.enter().append("text")
+			  .attr("class","scoreGroup")
+			  .text(String)
+			  .attr("x",0)
+			texts.exit().remove();
+			texts.attr("y",function(d,i){ return (i*12)+8; })
+          }else{
+            track.selectAll("text.scoreGroup").remove();
+          }
 
         break;
         case "vcf":

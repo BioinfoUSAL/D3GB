@@ -25,11 +25,13 @@ a data frame in BED format ready to use as an assembly in \code{genomebrowser} o
   \code{\link{genomebrowser}}, \code{\link{genomemap}}.
 }
 \examples{
+\dontrun{
 # Download fasta file
 fasta <- tempfile()
-download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
+download.file(paste0("https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 "GCF_000297395.2_ASM29739v2/GCF_000297395.2_ASM29739v2_genomic.fna.gz"),fasta)
 
 # Assembly generation
 getAssemblyFromFasta(fasta)
+}
 }

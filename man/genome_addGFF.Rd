@@ -4,9 +4,6 @@
 \author{
 David Barrios and Carlos Prieto. Bioinformatics, University of Salamanca. See \url{http://d3gb.usal.es/}
 }
-\value{
-The function add track in a gff file to \code{genomebrowser}.
-}
 \usage{
 genome_addGFF(gb, gfffile)
 }
@@ -26,7 +23,7 @@ genome_addGFF(gb, gfffile)
 \dontrun{
 # Download fasta file
 fasta <- tempfile()
-download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
+download.file(paste0("https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 "GCF_000297395.2_ASM29739v2/GCF_000297395.2_ASM29739v2_genomic.fna.gz"),fasta)
 
 # Genome browser generation.
@@ -38,7 +35,7 @@ genome_addSequence(gb,fasta)
 
 # Download gff file and add to the genome browser
 gff <- tempfile()
-download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
+download.file(paste0("https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 "GCF_000297395.2_ASM29739v2/GCF_000297395.2_ASM29739v2_genomic.gff.gz"),gff)
 
 genome_addGFF(gb,gff)

@@ -113,7 +113,7 @@ function bioinfoLogo(){
   d3.select("body")
     .append("a")
     .style({"display":"block", "position":"fixed", "right":"10px", "bottom":"10px"})
-      .attr("href","http://bioinfo.usal.es")
+      .attr("href","https://bioinfo.usal.es")
       .attr("title","Please, cite us: \nBarrios, D. & Prieto, C. D3GB: An Interactive Genome Browser for R, Python, and WordPress. J. Comput. Biol. (2017). doi:10.1089/cmb.2016.0213")
       .html(bioinfoLogoSVG)
 }

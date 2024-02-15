@@ -24,5 +24,7 @@ genomemap(assembly, mapTrack = NA, dir = "GenomeMap")
   \code{\link{createAssembly}}, \code{\link{getAssemblyFromFasta}}, \code{\link{GRCh37.bands}}, \code{\link{GRCh38.bands}}.
 }
 \examples{
+\dontrun{
 genomemap(GRCh38.bands, dir="GRCh38_map")
+}
 }

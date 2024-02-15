@@ -22,7 +22,7 @@ gbk2genomebrowser(gbkfile, server = FALSE, dir = "GenomeBrowser")
 \dontrun{
 # Download GenBank file
 gbff <- tempfile()
-download.file(paste0("ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
+download.file(paste0("https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",
 "GCF_000297395.2_ASM29739v2/GCF_000297395.2_ASM29739v2_genomic.gbff.gz"),gbff)
 
 # Genome browser generation.

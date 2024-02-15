@@ -141,15 +141,18 @@ closeDB <- function(db){
   dbDisconnect(db)
 }
 
-#create sqlite to store tracks
-createDB<-function(dir, tracks = NA, types = NA, colors = NA){
-  db <- openDB(dir)
-  if(!(length(tracks)==1 && is.na(tracks))){
-    for(i in seq_along(tracks)){
-      add2DB(db, tracks[[i]], names(tracks)[i], types[i], colors[i])
+rowsMatchAssembly <- function(gb,track){
+    uniqueScaffolds <- unique(as.character(gb$assembly[,1]))
+    matchRows <- vapply(as.character(track[,1]),function(x){ return(x %in% uniqueScaffolds) },logical(1))
+    mismatchRows <- sum(!matchRows)
+    if(mismatchRows){
+      track <- track[matchRows,]
+      if(nrow(track))
+        warning(paste0("There are ",mismatchRows," rows that do not match in the assembly scaffolds"))
+      else
+        warning(paste0("No row matches in the assembly scaffolds"))
     }
-  }
-  closeDB(db)
+    return(track)
 }
 
 #track post-addition
@@ -165,9 +168,12 @@ genome_addTrack <- function(gb, track, trackname = NULL, type = "gene", color = 
     warning("Track argument must be a data frame or a character vector giving an existing file.")
   }
   if(!is.null(trackname)){
-    db <- openDB(gb$dir)
-    add2DB(db, track, trackname, type, color, scale)
-    closeDB(db)
+    track <- rowsMatchAssembly(gb,track)
+    if(nrow(track)){
+      db <- openDB(gb$dir)
+      add2DB(db, track, trackname, type, color, scale)
+      closeDB(db)
+    }
   }
 }
 
@@ -204,10 +210,18 @@ genomebrowser<-function(assembly, tracks = NA, types = NA, colors = NA, mapTrack
     file.copy(paste(wwwDirectory(), "query.php", sep = "/"), dir)
   }else{
     createHTML(dir, c("d3.min.js","jspdf.min.js","sql.js","functions.js","images.js","query.js","genomebrowser.js","genomemap.js"), data, chromosomes)
-    message("Open the \"index.html\" file with Mozilla Firefox to see the graph. If you want to see this local file with other web browser, please visit the help section on the D3gb Web site http://d3gb.usal.es/")
+    message("Open the \"index.html\" file with Mozilla Firefox to see the graph. If you want to see this local file with other web browser, please visit the help section on the D3gb Web site https://d3gb.usal.es/")
   }
-  createDB(dir, tracks, types, colors)
-  structure(list(dir = dir, call = match.call()), class = "genomebrowser")
+  db <- openDB(dir)
+  if(!(length(tracks)==1 && is.na(tracks))){
+    for(i in seq_along(tracks)){
+      track <- rowsMatchAssembly(list(assembly = assembly),tracks[[i]])
+      if(nrow(track))
+        add2DB(db, track, names(tracks)[i], types[i], colors[i])
+    }
+  }
+  closeDB(db)
+  structure(list(dir = dir, assembly = assembly, call = match.call()), class = "genomebrowser")
 }
 
 #create html wrapper for genome map
@@ -383,6 +397,11 @@ gbk2genomebrowser <- function(gbkfile, server = FALSE, dir = "GenomeBrowser"){
 genome_addGFF <- function(gb, gfffile){
 
   gff <- read.delim(gfffile,FALSE,quote="",comment.char="#")
+
+  gff <- rowsMatchAssembly(gb,gff)
+
+  if(nrow(gff)){
+
   nrows <- nrow(gff)
 
   ID <- as.character(seq_len(nrows))
@@ -463,6 +482,8 @@ genome_addGFF <- function(gb, gfffile){
   }
 
   add_tracks(gb$dir,uniqTracks,tracks)
+
+  }
 }
 
 #add vcf track
@@ -490,6 +511,8 @@ genome_addVCF <- function(gb, vcffile, trackname=NULL, show=NULL){
   datacsq <- character()
 
   cont <- 0
+  mismatchCont <- 0
+  uniqueScaffolds <- unique(as.character(gb$assembly[,1]))
 
   con <- file(vcffile,'r')
   ntracks <- length(grep('^[^#]',readLines(con)))
@@ -515,6 +538,10 @@ genome_addVCF <- function(gb, vcffile, trackname=NULL, show=NULL){
       info <- character(ntracks)
     }else if(!grepl("^#",oneLine)){
       aux <- unlist(strsplit(oneLine,"\t"))
+      if(!(aux[1] %in% uniqueScaffolds)){
+        mismatchCont <- mismatchCont + 1
+        next
+      }
       cont <- cont+1
       name[cont] <- trackname
       chr[cont] <- aux[1]
@@ -564,17 +591,27 @@ genome_addVCF <- function(gb, vcffile, trackname=NULL, show=NULL){
   ID[ID=="."] <- NA
   tracks <- data.frame(name,chr,as.numeric(start)-1,start,ID,info)
 
-  db <- openDB(gb$dir)
-  datavcf <- NULL
-  if(length(datainfo)){
-    datavcf <- list(info=datainfo)
-    if(!is.null(show))
-      datavcf[["show"]] <- show
+  if(mismatchCont){
+    tracks <- tracks[tracks[,2]!="",]
+    if(nrow(tracks))
+      warning(paste0("There are ",mismatchCont," variants that do not match in the assembly scaffolds"))
+    else
+      warning(paste0("No variant matches in the assembly scaffolds"))
   }
-  if(!length(dataformat))
-    dataformat <- NULL
-  add2DB(db,tracks[as.vector(tracks[,1])==trackname,-1],trackname,'vcf',"#000",datavcf)
-  for(i in seq_along(uniqTracks))
-    add2DB(db,tracks[as.vector(tracks[,1])==uniqTracks[i],-1],uniqTracks[i],'vcfsample',"#000",dataformat)
-  closeDB(db)
+
+  if(nrow(tracks)){
+    db <- openDB(gb$dir)
+    datavcf <- NULL
+    if(length(datainfo)){
+      datavcf <- list(info=datainfo)
+      if(!is.null(show))
+        datavcf[["show"]] <- show
+    }
+    if(!length(dataformat))
+      dataformat <- NULL
+    add2DB(db,tracks[as.vector(tracks[,1])==trackname,-1],trackname,'vcf',"#000",datavcf)
+    for(i in seq_along(uniqTracks))
+      add2DB(db,tracks[as.vector(tracks[,1])==uniqTracks[i],-1],uniqTracks[i],'vcfsample',"#000",dataformat)
+    closeDB(db)
+  }
 }

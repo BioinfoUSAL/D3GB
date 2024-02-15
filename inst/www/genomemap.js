@@ -187,13 +187,20 @@ d3.selectAll(".chromosome .bands>path:not(.acen)").each(function(){
 });
 
 d3.selectAll(".chromosome path.acen").each(function(d,i){
-	var coords = getCoords(this, svgDoc),
-	  color = d3.rgb(d3.select(this).style("fill"));
-	doc.setFillColor(color.r,color.g,color.b);
-	if(i%2==0)
-	  doc.triangle(coords.x, coords.y, coords.x2, coords.y, (coords.x+coords.x2)/2, coords.y2, 'FD');
-	else
-	  doc.triangle(coords.x, coords.y2, coords.x2, coords.y2, (coords.x+coords.x2)/2, coords.y, 'FD');
+  var coords = getCoords(this, svgDoc),
+      color = d3.rgb(d3.select(this).style("fill"));
+  doc.setFillColor(color.r,color.g,color.b);
+  if(this.parentNode.parentNode.parentNode.getAttribute("class") == "tracks"){
+    if(i%2==0)
+      doc.triangle(coords.x, coords.y, coords.x, coords.y2, coords.x2, (coords.y+coords.y2)/2, 'FD');
+    else
+      doc.triangle(coords.x2, coords.y, coords.x2, coords.y2, coords.x, (coords.y+coords.y2)/2, 'FD');
+  }else{
+    if(i%2==0)
+      doc.triangle(coords.x, coords.y, coords.x2, coords.y, (coords.x+coords.x2)/2, coords.y2, 'FD');
+    else
+      doc.triangle(coords.x, coords.y2, coords.x2, coords.y2, (coords.x+coords.x2)/2, coords.y, 'FD');
+  }
 });
 
 doc.setFillColor(0,144,0);
@@ -245,7 +252,7 @@ d3.selectAll(".track>.segment>path, .track.score>path, .track>.values>path").eac
   doc.lines(acc, coords.x, coords.y, [1,1], 'F', true);
 })
 
-d3.selectAll(".track.vcfmaster>.segment>rect").each(function(){
+d3.selectAll(".track.vcf>.segment>rect").each(function(){
   var coords = getCoords(this, svgDoc),
       color = d3.rgb(d3.select(this).style("fill"));
   doc.setFillColor(color.r,color.g,color.b);

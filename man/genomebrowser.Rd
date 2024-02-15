@@ -29,9 +29,11 @@ mapTrack = NA, server = FALSE, dir = "GenomeBrowser")
   \code{\link{createAssembly}}, \code{\link{getAssemblyFromFasta}}, \code{\link{GRCh37.bands}}, \code{\link{GRCh38.bands}}, \code{\link{genome_addGFF}}, \code{\link{genome_addSequence}}, \code{\link{genome_addTrack}}, \code{\link{genome_addVCF}}.
 }
 \examples{
+\dontrun{
 # Genome browser generation.
 # It creates a genome browser ready to be viewed in Firefox.
 # For a server version, ready to be shared with Apache as a Website, set the parameter server=True
 gb <- genomebrowser(GRCh38.bands, dir="GRCh38_browser")
 # Now you can add sequences, tracks, gff or vcf
+}
 }
