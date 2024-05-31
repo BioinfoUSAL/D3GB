@@ -25,7 +25,7 @@ a data frame in BED format ready to use as an assembly in \code{genomebrowser} o
   \code{\link{genomebrowser}}, \code{\link{genomemap}}.
 }
 \examples{
-\dontrun{
+\donttest{
 # Download fasta file
 fasta <- tempfile()
 download.file(paste0("https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/297/395/",

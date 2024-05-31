@@ -23,3 +23,6 @@ genome_addTrack(gb, track, trackname = NULL, type = "gene", color = "#000", scal
 \description{
 \code{genome_addTrack} add tracks to \code{genomebrowser}.
 }
+\value{
+No return value, called for side effects
+}

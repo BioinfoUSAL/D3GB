@@ -1,22 +1,18 @@
 var db;
 
 function load_db(gb){
-  d3.xhr('Tracks.db')
-    .responseType('arraybuffer') 
-    .get(function(error,res) {
-      if(error){
-        if(window.location.protocol=="file:" && navigator.userAgent.toLowerCase().indexOf('firefox') == -1){
-          d3.select("html")
-            .append("div")
-            .html("<p>Your browser cannot access to local files. We recommend the use of Mozilla Firefox which avoids this restriction.</p><p>Please visit the <a style='color:#1f77b4' href=\"bioinfo.usal.es/d3gb/help\">D3GB help page<a/> to change your browser preferences.</p>")
-            .style({"font-family":"sans-serif",margin:"0 auto","margin-top":"100px",padding:"10px","max-width":"900px"})
-        }
-        throw error;
-      };
-      var uInt8Array = new Uint8Array(res.response);
-      db = new SQL.Database(uInt8Array);
-      gb();
-    });
+  var script = document.createElement("script");
+  script.src = "tracksdb.js";
+  document.getElementsByTagName('head')[0].appendChild(script);
+  script.onload = function(){
+    var binaryString = atob(tracksdb);
+    var bytes = new Uint8Array(binaryString.length);
+    for (var i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    db = new SQL.Database(bytes);
+    gb();
+  }
 }
 
 function get_query(sql,callback){
@@ -58,18 +54,12 @@ function get_dna(d,callback){
   thickSize = thickEnd - thickStart,
   data = {};
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', "sequences/"+chr+".fa", true);
-  xhr.responseType = 'arraybuffer';
+  var js = document.createElement("script");
+  js.src = "sequences/"+chr+".js";
+  document.getElementsByTagName('head')[0].appendChild(js);
 
-  xhr.onload = function(e) {
-    var offset = 2;
-    while(new Uint8Array(this.response.slice(offset-1,offset))[0]!=10)
-      offset++;
-    var uInt8Array = new Uint8Array(this.response.slice(start+offset,end+offset));
-    var dna = "";
-    for(i = 0; i<uInt8Array.length; i++)
-      dna = dna + String.fromCharCode(uInt8Array[i]).toLowerCase();
+  js.onload = function(e) {
+    var dna = sequence.slice(start,end).toLowerCase();
 
     if(blockCount){
       sizes = blockSizes.split(',');
@@ -248,15 +238,7 @@ function get_dna(d,callback){
     callback(false, data);
   }
 
-  xhr.onreadystatechange = function () {
-    if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 0) {
-      callback(false, false);
-    }
-  }
-
-  try{
-    xhr.send();
-  }catch(e){
+  js.onerror = function () {
     callback(false, false);
   }
 

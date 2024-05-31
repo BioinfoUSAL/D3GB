@@ -44,9 +44,7 @@ genomemapJSON<-function(data, assembly){
   json$chromosomes <- array(unique(assembly[,1]))
   json$data <- list()
   json$max <- max(assembly[,3])
-  if(!(length(data)==1 && is.na(data))){
-    if(is.character(data))
-      data <- read.delim(data,FALSE,quote="")
+  if(length(data)){
     data[,5] <- as.numeric(data[,5])
     data <- data[complete.cases(data[,5]),]
     if(nrow(data)>100000){
@@ -80,7 +78,7 @@ chromosomesJSON<-function(assembly){
 
 # open data base
 openDB <- function(dir){
-  db <- dbConnect(SQLite(), dbname = paste(dir, "Tracks.db", sep = "/"))
+  db <- dbConnect(SQLite(), dbname = file.path(dir, "Tracks.db"))
   res <- dbSendQuery(conn = db, "CREATE TABLE IF NOT EXISTS tbl_tracks (trackid INTEGER PRIMARY KEY, trackname TEXT, type TEXT, color TEXT, data TEXT)")
   dbClearResult(res)
   res <- dbSendQuery(conn = db, "CREATE TABLE IF NOT EXISTS tbl_segments (trackid INTEGER, chr TEXT COLLATE NOCASE, start INTEGER, end INTEGER, name TEXT, score TEXT, strand TEXT, thickStart INTEGER, thickEnd INTEGER, itemRGB TEXT, blockCount INTEGER, blockSizes TEXT, blockStarts TEXT)")
@@ -157,6 +155,8 @@ rowsMatchAssembly <- function(gb,track){
 
 #track post-addition
 genome_addTrack <- function(gb, track, trackname = NULL, type = "gene", color = "#000", scale = NA){
+  checkGenomeBrowserObject(gb)
+
   if(is.data.frame(track)){
     if(is.null(trackname))
       trackname <- as.list(match.call())$track
@@ -179,41 +179,62 @@ genome_addTrack <- function(gb, track, trackname = NULL, type = "gene", color = 
 
 #add a sequence
 genome_addSequence <- function(gb, fastafile){
+  checkGenomeBrowserObject(gb)
+
   dir <- gb$dir
-  if(!file.exists(paste(dir,"sequences",sep="/")))
-    dir.create(paste(dir,"sequences",sep="/"))
+  if(!file.exists(file.path(dir,"sequences"))){
+    dir.create(file.path(dir,"sequences"))
+  }
+  validChrs <- unique(gb$assembly[,1])
   for(i in fastafile){
     con <- file(i,'r')
-    seq <- ""
+    seq <- NULL
     while (length(oneLine <- readLines(con, n = 1, warn = FALSE)) > 0) {
       if(grepl("^>",oneLine)){
-        if(!is.character(seq))
+        if(!is.null(seq)){
           close(seq)
-        chr <- unlist(strsplit(oneLine,"[ \\|]"))[1]
-        seq <- file(paste0(dir,"/sequences/",sub(">","",chr),".fa"),"w")
-        writeLines(chr,seq)
-      }else{
+        }
+        chrline <- unlist(strsplit(oneLine,"[ \\|]"))[1]
+        chr <- sub(">","",chrline)
+        if(chr %in% validChrs){
+          seq <- file(file.path(dir,"sequences",paste0(chr,".fa")),"w")
+          writeLines(chrline,seq)
+        }else{
+          seq <- NULL
+          warning(paste0("'",chr,"' missing in assembly"))
+        }
+      }else if(!is.null(seq)){
         writeLines(oneLine,seq,sep="")
       }
     }
-    close(seq)
+    if(!is.null(seq)){
+      close(seq)
+    }
     close(con)
   }
 }
 
-#create html wrapper for genome viewer
-genomebrowser<-function(assembly, tracks = NA, types = NA, colors = NA, mapTrack = NA, server = FALSE, dir = "GenomeBrowser"){
-  data <- genomemapJSON(mapTrack, assembly)
-  chromosomes <- chromosomesJSON(assembly)
-  if(server){
-    createHTML(dir, c("d3.min.js","jspdf.min.js","functions.js","images.js","genomebrowser.js","genomemap.js"), data, chromosomes)
-    file.copy(paste(wwwDirectory(), "query.php", sep = "/"), dir)
-  }else{
-    createHTML(dir, c("d3.min.js","jspdf.min.js","sql.js","functions.js","images.js","query.js","genomebrowser.js","genomemap.js"), data, chromosomes)
-    message("Open the \"index.html\" file with Mozilla Firefox to see the graph. If you want to see this local file with other web browser, please visit the help section on the D3gb Web site https://d3gb.usal.es/")
+#checks genomebrowser object
+checkGenomeBrowserObject <- function(gb){
+  if(!inherits(gb,"genomebrowser")){
+    stop("gb: wrong object class. Must be a 'genomebrowser' object.")
   }
+}
+
+checkMapTrack <- function(mapTrack){
+  if(is.character(mapTrack) && length(mapTrack)==1 && file.exists(mapTrack)){
+    mapTrack <- read.delim(mapTrack,FALSE,quote="")
+  }
+  return(mapTrack)
+}
+
+#create html wrapper for genome viewer
+genomebrowser <- function(assembly, tracks = NULL, types = NA, colors = NA, mapTrack = NULL){
+  dir <- file.path(tempdir(),paste0(round(as.numeric(Sys.time())),"_genomebrowser"))
+  dir.create(dir)
+
   db <- openDB(dir)
-  if(!(length(tracks)==1 && is.na(tracks))){
+  if(length(tracks)){
     for(i in seq_along(tracks)){
       track <- rowsMatchAssembly(list(assembly = assembly),tracks[[i]])
       if(nrow(track))
@@ -221,12 +242,12 @@ genomebrowser<-function(assembly, tracks = NA, types = NA, colors = NA, mapTrack
     }
   }
   closeDB(db)
-  structure(list(dir = dir, assembly = assembly, call = match.call()), class = "genomebrowser")
+  structure(list(dir = dir, assembly = assembly, mapTrack = checkMapTrack(mapTrack)), class = "genomebrowser")
 }
 
 #create html wrapper for genome map
-genomemap<-function(assembly, mapTrack = NA, dir = "GenomeMap"){
-  createHTML(dir, c("d3.min.js","jspdf.min.js","functions.js","genomemap.js"), genomemapJSON(mapTrack, assembly), chromosomesJSON(assembly))
+genomemap <- function(assembly, mapTrack = NULL){
+  structure(list(assembly = assembly, mapTrack = checkMapTrack(mapTrack)), class = "genomebrowser")
 }
 
 #add tracks to database
@@ -250,7 +271,7 @@ add_tracks <- function(dir,uniqTracks,tracks){
 }
 
 #create a genome viewer from a genBank file
-gbk2genomebrowser <- function(gbkfile, server = FALSE, dir = "GenomeBrowser"){
+gbk2genomebrowser <- function(gbkfile){
   current <- 1
   currentTrack <- ""
   string <- ""
@@ -329,7 +350,7 @@ gbk2genomebrowser <- function(gbkfile, server = FALSE, dir = "GenomeBrowser"){
     }else if(aux[1]=="ORIGIN"){
       trackData()
       current <- 3
-      sequence <- file(paste0(tmp,"/",chr[length(chr)],".fa"),"w")
+      sequence <- file(file.path(tmp,paste0(chr[length(chr)],".fa")),"w")
       writeLines(paste0(">",chr[length(chr)]),con=sequence)
     }else if(grepl("^[A-Z]",aux[1])){
       current <- 1
@@ -380,13 +401,14 @@ gbk2genomebrowser <- function(gbkfile, server = FALSE, dir = "GenomeBrowser"){
     length(blockStarts) <- traLen
     tracks[[13]] <- blockStarts
   }
-  gb <- genomebrowser(assembly,server=server,dir=dir)
+  gb <- genomebrowser(assembly)
 
-  add_tracks(dir,uniqTracks,tracks)
+  add_tracks(gb$dir,uniqTracks,tracks)
 
-  dir.create(paste(dir,"sequences",sep="/"))
-  for(i in chr)
-    file.copy(paste0(tmp,"/",i,".fa"),paste0(dir,"/sequences/",i,".fa"))
+  dir.create(file.path(gb$dir,"sequences"))
+  for(i in chr){
+    file.copy(file.path(tmp,paste0(i,".fa")),file.path(gb$dir,"sequences",paste0(i,".fa")))
+  }
 
   unlink(tmp)
 
@@ -395,6 +417,7 @@ gbk2genomebrowser <- function(gbkfile, server = FALSE, dir = "GenomeBrowser"){
 
 #add a gff file to genome viewer
 genome_addGFF <- function(gb, gfffile){
+  checkGenomeBrowserObject(gb)
 
   gff <- read.delim(gfffile,FALSE,quote="",comment.char="#")
 
@@ -488,6 +511,7 @@ genome_addGFF <- function(gb, gfffile){
 
 #add vcf track
 genome_addVCF <- function(gb, vcffile, trackname=NULL, show=NULL){
+  checkGenomeBrowserObject(gb)
 
   get_description <- function(line){
     id <- gsub(".+ID=|,.+$","",line)[1]
@@ -614,4 +638,61 @@ genome_addVCF <- function(gb, vcffile, trackname=NULL, show=NULL){
       add2DB(db,tracks[as.vector(tracks[,1])==uniqTracks[i],-1],uniqTracks[i],'vcfsample',"#000",dataformat)
     closeDB(db)
   }
+}
+
+genome_createServerMode <- function(gb, dir="GenomeBrowser"){
+  checkGenomeBrowserObject(gb)
+
+  chromosomes <- chromosomesJSON(gb$assembly)
+  data <- genomemapJSON(gb$mapTrack, gb$assembly)
+  createHTML(dir, c("d3.min.js","jspdf.min.js","functions.js","images.js","genomebrowser.js","genomemap.js"), data, chromosomes)
+  file.copy(file.path(wwwDirectory(), "query.php"), dir)
+  if(!is.null(gb$dir) && file.exists(file.path(gb$dir, "Tracks.db"))){
+    file.copy(file.path(gb$dir, "Tracks.db"),file.path(dir, "Tracks.db"))
+    seqpath <- file.path(gb$dir,"sequences")
+    if(file.exists(seqpath)){
+      dir.create(file.path(dir,"sequences"))
+      for(fa in dir(seqpath)){
+        file.copy(file.path(seqpath,fa),file.path(dir,"sequences",fa))
+      }
+    }
+  }
+}
+
+genome_createLocalMode <- function(gb, dir="GenomeBrowser"){
+  checkGenomeBrowserObject(gb)
+
+  if(is.null(gb$dir)){
+    scripts <- c("d3.min.js","jspdf.min.js","functions.js","genomemap.js")
+  }else{
+    scripts <- c("d3.min.js","jspdf.min.js","sql.js","functions.js","images.js","query.js","genomebrowser.js","genomemap.js")
+  }
+
+  chromosomes <- chromosomesJSON(gb$assembly)
+  data <- genomemapJSON(gb$mapTrack, gb$assembly)
+  createHTML(dir, scripts, data, chromosomes)
+
+  if(!is.null(gb$dir) && file.exists(file.path(gb$dir, "Tracks.db"))){
+    b64 <- base64enc::base64encode(file.path(gb$dir, "Tracks.db"))
+    tracksdb <- paste0('var tracksdb = "',b64,'";')
+    write(tracksdb, file.path(dir, "tracksdb.js"))
+    seqpath <- file.path(gb$dir,"sequences")
+    if(file.exists(seqpath)){
+      dir.create(file.path(dir,"sequences"))
+      for(fa in dir(seqpath)){
+        sequence <- scan(file.path(seqpath,fa), what=character(), quiet=TRUE)
+        write(paste0('var sequence = "',sequence[2],'";'),file=file.path(dir,"sequences",paste0(substring(sequence[1],2),".js")))
+      }
+    }
+  }
+
+  message("Open the \"index.html\" file with your web browser to see the graph.")
+}
+
+plot.genomebrowser <- function(x, dir = NULL, ...){
+  if(is.null(dir)){
+    dir <- paste0(x$dir,"_localMode")
+  }
+  genome_createLocalMode(x,dir)
+  browseURL(normalizePath(file.path(dir, "index.html")))
 }

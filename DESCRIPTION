@@ -1,14 +1,16 @@
 Package: D3GB
 Type: Package
-Version: 1.2
-Date: 2024-02-15
-Title: Interactive Genome Browser with R
-Description: Creates interactive genome browser with 'R'. It joins the data analysis power of R and the visualization libraries of JavaScript in one package.
+Version: 2.0
+Date: 2024-05-24
+Title: Interactive Genome Browser
+Description: Creates interactive genome browser. It joins the data analysis power of 'R' and the visualization libraries of 'JavaScript' in one package. Barrios, D. & Prieto, C. (2017) <doi:10.1089/cmb.2016.0213>.
 URL: http://d3gb.usal.es
-License: CC BY-NC-SA 4.0
+License: GPL-2 | GPL-3
 Depends: R (>= 3.0.0)
-Imports: RSQLite (>= 1.0.0), DBI (>= 0.3.1)
+Imports: RSQLite (>= 1.0.0), DBI (>= 0.3.1), base64enc
 NeedsCompilation: no
-Author: Carlos Prieto <cprietos@usal.es>,
-  David Barrios <metal@usal.es>
+Authors@R: c( 
+    person("Carlos", "Prieto", email = "cprietos@usal.es", role = c("aut", "cph","cre"), comment = c(ORCID = "0000-0001-8178-9768")),
+    person("David", "Barrios", email = "metal@usal.es", role = "aut", comment = c(ORCID = "0000-0003-4465-0200"))
+    )
 Maintainer: Carlos Prieto <cprietos@usal.es>

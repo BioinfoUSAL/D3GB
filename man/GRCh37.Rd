@@ -3,3 +3,4 @@
 \title{Length of human chromosomes based on GRCh37 assembly}
 \source{See \url{https://www.ncbi.nlm.nih.gov/assembly/GCF_000001405.13/}.}
 \description{Length of human chromosomes based on GRCh37 assembly.}
+\value{A Data Frame containing length of chromosomes of GRCh37 assembly.}

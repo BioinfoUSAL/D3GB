@@ -19,3 +19,6 @@ genome_addVCF(gb, vcffile, trackname = NULL, show = NULL)
 \description{
 \code{genome_addVCF} add VCF tracks to \code{genomebrowser}.
 }
+\value{
+No return value, called for side effects
+}
