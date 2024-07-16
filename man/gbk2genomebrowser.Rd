@@ -8,10 +8,11 @@ David Barrios and Carlos Prieto. Bioinformatics, University of Salamanca. See \u
 Object of class \code{genomebrowser}.
 }
 \usage{
-gbk2genomebrowser(gbkfile)
+gbk2genomebrowser(gbkfile, namelabel = NULL)
 }
 \arguments{
 \item{gbkfile}{a "character" string representing the input GenBank file to be represented in the genome browser.}
+\item{namelabel}{a "character" string giving the GenBank field to be represented as feature name in the genome browser. By default the function will search for "locus_tag" or "gene" fields.}
 }
 \description{
 \code{gbk2genomebrowser} creates an interactive genome browser from a GenBank file.

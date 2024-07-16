@@ -271,7 +271,15 @@ add_tracks <- function(dir,uniqTracks,tracks){
 }
 
 #create a genome viewer from a genBank file
-gbk2genomebrowser <- function(gbkfile){
+gbk2genomebrowser <- function(gbkfile, namelabel = NULL){
+  if(is.null(namelabel)){
+    namefixed = FALSE
+    namelabel = "/locus_tag=|/gene="
+  }else{
+    namefixed = TRUE
+    namelabel = paste0("/",namelabel,"=")
+  }
+
   current <- 1
   currentTrack <- ""
   string <- ""
@@ -322,7 +330,7 @@ gbk2genomebrowser <- function(gbkfile){
           end <<- c(end,pos[2])
         }
         strand <<- c(strand,str)
-      }else if(grepl("/locus_tag=|/gene=",string)){
+      }else if(grepl(namelabel,string,fixed=namefixed)){
           name[length(tracks)] <<- gsub('.*="|"',"",string)
       }else if(!grepl("/translation=",string)){
           if(is.na(score[length(tracks)]))
