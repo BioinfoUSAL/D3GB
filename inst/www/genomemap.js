@@ -9,7 +9,7 @@ if(typeof genomebrowser == 'undefined'){
 
 function genomemap(){
 
-    margin = {top: 20, right: 50, bottom: 80, left: 50},
+    margin = {top: 50, right: 50, bottom: 50, left: 50},
     width = 1000 - margin.left - margin.right,
     height = 580 - margin.top - margin.bottom;
 
@@ -19,26 +19,50 @@ var x = d3.scale.linear()
 var y = d3.scale.linear()
     .range([0, height]);
 
-d3.select("body").append("div")
-    .style({"width":(width + margin.left + margin.right)+"px", "margin": "0 auto"})
+var body = d3.select("body");
+body.append("div")
+    .attr("class","main")
+    .style("width", (width + margin.left + margin.right)+"px")
+    .style("margin", "0 auto")
     .append("div")
-    .style({"padding-left": margin.left+"px", "padding-right": margin.right+"px", "margin-top": "20px"})
+    .attr("class","nav")
+    .style("padding-left",margin.left+"px")
+    .style("padding-right",margin.right+"px")
+    .style("margin-top", "20px")
 
 if(typeof displaySelector != 'undefined'){
-  d3.select("body>div>div")
-	.append("a")
-	.append("button")
-        .attr("disabled", true)
-        .text("Go to");
-  imgInfo(d3.select("body>div>div"), function(sel){
-    sel.append('div').style("padding","10% 20%").html(
-           '<p>Click or select a region to view in the genome browser.</p>'+
-           infoImages.genomeMap+
-           '<p>Then click on <button>Go to</button></p>')
+  var nav = body.select("div.main > div.nav")
+  nav.append("input")
+     .attr("class","search-input")
+     .attr("type", "text")
+     .attr("name", "r")
+     .style("width","200px")
+     .on("keyup", function(){
+        if(d3.event.keyCode == 13){
+          gotoLocation();
+        }else{
+          searchGene();
+        }
+      })
+     .on("paste", function(){
+	searchGene();
+      })
+  nav.append("button")
+     .attr("class","goto-button")
+     .text("Go to")
+     .on("click", gotoLocation);
+  nav.append("button")
+     .attr("class","search-button")
+     .text("Search")
+     .on("click", searchGlobal);
+  imgInfo(body.select("div.main > div.nav"), function(sel){
+    sel.append('p').html("Click or select a region to view in the genome browser.")
+    sel.append('p').html(infoImages.genomeMap)
+    sel.append('p').html("Then click on <button>Go to</button>")
   })
 }
 
-var svg = d3.select("body>div").append("svg")
+var svg = body.select("div.main").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom);
   svg.append("style")
@@ -79,15 +103,14 @@ var svg = d3.select("body>div").append("svg")
 
   x.domain([xMin,xMax]).nice();
 
-  if (count>24){
-    width = count*(width/24);
-    d3.select("svg").attr("width", width + margin.left + margin.right)
-  }
+
+  height = count * 40;
+  d3.select("svg").attr("height", height + margin.top + margin.bottom)
 
 data.chromosomes.forEach(function(chr, i){
 
   svg.append("text")
-     .attr("transform", "translate("+(i*width/count)+","+(height+16)+") rotate(45)")
+     .attr("transform", "translate(0,"+(i*(40))+")")
      .text(chr);
 
     var json = chromosomes[chr.toLowerCase()];
@@ -95,7 +118,7 @@ data.chromosomes.forEach(function(chr, i){
     var gChr = svg.append("g")
       .attr("class", "chromosome")
       .attr("id", chr)
-      .attr("transform", "translate("+(i*width/count)+","+height+") rotate(-90)")
+      .attr("transform", "translate(0,"+((i*40)+4)+")")
 
     var maxDom = d3.max(json,function(d){ return d[1]; }),
         maxRan = y(maxDom),
@@ -129,11 +152,12 @@ bioinfoLogo();
 }
 
 function displayButtons(){
-    d3.select("body>div>div").append("button")
+    var divButtons = d3.select("body > div.main > div.nav");
+    divButtons.append("button")
 	.text("SVG")
 	.style("float","right")
 	.on("click", svgDownload);
-    d3.select("body>div>div").append("button")
+    divButtons.append("button")
 	.text("PDF")
 	.style("float","right")
 	.on("click", svg2pdf);

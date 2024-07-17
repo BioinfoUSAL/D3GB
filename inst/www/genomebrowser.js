@@ -185,7 +185,16 @@ function imgInfo(sel, callback){
 	.attr("height", 14)
 	.attr("src", infoIcon)
 	.style({"cursor": "pointer", "padding-left":"4px"})
-	.on("click", function(){ callback(showWindow()); });
+	.on("click", function(){
+            execDB("SELECT * FROM aux_genes WHERE _ROWID_ = (abs(random()) % (SELECT max(_ROWID_) FROM aux_genes)) LIMIT 1", function(gene) {
+            var example = gene[0];
+            var sel = showWindow();
+            sel.append("style").text(".window p { margin: 20px 0; } .window p>svg { vertical-align: middle; }")
+            sel.append("p").html("Input a region specified like '"+(example[0]+":"+example[1]+"-"+example[2])+"' or '"+(example[3])+"', then click <button>Go to</button>")
+            sel.append("p").html("Input a word to search in browser, then click <button>Search</button>")
+            callback(sel);
+          });
+	});
 }
 
 function displayTooltip(infoButton, displayInfo){
@@ -270,11 +279,7 @@ function displaySelector(gChr, chrScale, selector){
     }
       
     if(typeof selector != 'object'){
-      body.select("a>button").attr("disabled", null)
-        .on("click", function(){
-          chr = gChr.attr("id");
-          displayTracks();
-        })
+      body.select("div.main > div.nav > input.search-input").property("value", gChr.attr("id")+":"+start+"-"+end)
     }else{
       displayTracks();
     }
@@ -443,11 +448,6 @@ function genomebrowser(){
      .on("click", searchGlobal);
 
   imgInfo(nav, function(sel){
-    execDB("SELECT * FROM aux_genes WHERE _ROWID_ = (abs(random()) % (SELECT max(_ROWID_) FROM aux_genes)) LIMIT 1", function(gene) {
-      var example = gene[0];
-      sel.append("style").text(".window p { margin: 20px 0; } .window p>svg { vertical-align: middle; }")
-      sel.append("p").html("Input a region specified like '"+(example[0]+":"+example[1]+"-"+example[2])+"' or '"+(example[3])+"', then click <button>Go to</button>")
-      sel.append("p").html("Input a word to search in browser, then click <button>Search</button>")
       sel.append("p").html(infoImages.clickHide+" Click on a track's name to hide/show it.")
       sel.append("p").html("Drag n' drop (horizontal) or right and left arrows to advance in the browser.")
       sel.append("p").html("Drag n' drop (vertical) to reorder tracks.<span style=\"padding: 0 4%;\"></span>"+infoImages.move)
@@ -455,7 +455,6 @@ function genomebrowser(){
       sel.append("p").html("Click on genes, exons, domains or vcf will display a window with information about the feature.")
       sel.append("p").html("Hover the features for information.<span style=\"padding: 0 4%;\"></span>"+infoImages.clickInfo)
       sel.append("p").html("In vcf's information window, hover the acronyms for explanation.")
-    });
   });
 
   if(dataTracks){
